@@ -60,4 +60,5 @@ func setupCli(db *database.Queries, cfg *config.Config) (state, commands) {
 func registerCommands(cmds *commands) {
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
+	cmds.register("reset", handlerReset)
 }
