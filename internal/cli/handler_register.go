@@ -18,7 +18,7 @@ func handlerRegister(s *state, cmd command) error {
 	ctx := context.Background()
 
 	// Check if the user already exists
-	if _, err := s.db.GetUser(ctx, cmd.args[0]); err == nil {
+	if _, err := s.db.GetUserByName(ctx, cmd.args[0]); err == nil {
 		return fmt.Errorf("user %s already exists\n", cmd.args[0])
 	}
 
