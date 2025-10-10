@@ -13,18 +13,12 @@ import (
 
 // handlerAddFeed adds a new feed for the current user, stores it in the database, and sets the user to follow the feed.
 // It validates the command arguments, retrieves the current user from the database, creates a feed, and follows it.
-func handlerAddFeed(s *state, cmd command) error {
+func handlerAddFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.args) < 2 {
 		return errors.New("missing feed name and url")
 	}
 
 	ctx := context.Background()
-
-	// get current user
-	user, err := s.db.GetUserByName(ctx, s.cfg.UserName)
-	if err != nil {
-		return err
-	}
 
 	// create the feed
 	feedParams := database.CreateFeedParams{
@@ -124,14 +118,13 @@ func handlerFeeds(s *state, cmd command) error {
 
 // handlerFollow adds a new feed for the current user, stores it in the database, and sets the user to follow the feed.
 // It validates the command arguments, retrieves the current user from the database, creates a feed, and follows it.
-func handlerFollow(s *state, cmd command) error {
+func handlerFollow(s *state, cmd command, user database.User) error {
 	if len(cmd.args) == 0 {
 		return errors.New("missing url")
 	}
 
 	ctx := context.Background()
 
-	user, _ := s.db.GetUserByName(ctx, s.cfg.UserName)
 	feed, err := s.db.GetFeedByURL(ctx, cmd.args[0])
 	if err != nil {
 		return errors.New("this feed does not exist")
@@ -153,14 +146,13 @@ func handlerFollow(s *state, cmd command) error {
 }
 
 // handlerFollowing lists all the feeds that the current user is following.
-func handlerFollowing(s *state, cmd command) error {
+func handlerFollowing(s *state, cmd command, user database.User) error {
 	if len(cmd.args) > 0 {
 		return errors.New("too many arguments")
 	}
 
 	ctx := context.Background()
 
-	user, _ := s.db.GetUserByName(ctx, s.cfg.UserName)
 	feeds, err := s.db.GetFeedFollowsForUser(ctx, user.ID)
 	if err != nil {
 		return errors.New("unable to retrieve following feeds")
