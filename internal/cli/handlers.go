@@ -247,3 +247,22 @@ func handlerUsers(s *state, cmd command) error {
 	}
 	return nil
 }
+
+func handlerUnFollow(s *state, cmd command, user database.User) error {
+	if len(cmd.args) == 0 {
+		return errors.New("missing feed url")
+	}
+
+	ctx := context.Background()
+	feed, err := s.db.GetFeedByURL(ctx, cmd.args[0])
+	if err != nil {
+		return errors.New("failed to get feed")
+	}
+	if err := s.db.RemoveFeedFollow(ctx, database.RemoveFeedFollowParams{
+		UserID: user.ID,
+		FeedID: feed.ID,
+	}); err != nil {
+		return errors.New("failed to remove following feed")
+	}
+	return nil
+}
