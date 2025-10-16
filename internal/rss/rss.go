@@ -9,16 +9,16 @@ import (
 	"net/http"
 )
 
-type RSSFeed struct {
+type Feed struct {
 	Channel struct {
-		Title       string    `xml:"title"`
-		Link        string    `xml:"link"`
-		Description string    `xml:"description"`
-		Item        []RSSItem `xml:"item"`
+		Title       string `xml:"title"`
+		Link        string `xml:"link"`
+		Description string `xml:"description"`
+		Item        []Item `xml:"item"`
 	} `xml:"channel"`
 }
 
-func (f *RSSFeed) UnescapeString() {
+func (f *Feed) UnescapeString() {
 	f.Channel.Title = html.UnescapeString(f.Channel.Title)
 	f.Channel.Description = html.UnescapeString(f.Channel.Description)
 
@@ -28,14 +28,14 @@ func (f *RSSFeed) UnescapeString() {
 	}
 }
 
-type RSSItem struct {
+type Item struct {
 	Title       string `xml:"title"`
 	Link        string `xml:"link"`
 	Description string `xml:"description"`
 	PubDate     string `xml:"pubDate"`
 }
 
-func FetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
+func FetchFeed(ctx context.Context, feedURL string) (*Feed, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func FetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 		return nil, err
 	}
 
-	var feed RSSFeed
+	var feed Feed
 	err = xml.Unmarshal(data, &feed)
 	if err != nil {
 		return nil, err
