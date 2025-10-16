@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/Nightails/gator/internal/database"
@@ -72,13 +73,13 @@ func handlerAgg(s *state, cmd command) error {
 	defer ticker.Stop()
 
 	// Run the scrapper immediately on start
-	if err := scrapeFeeds(s.db); err != nil {
+	if err := scrapeFeeds(s); err != nil {
 		return err
 	}
 
 	// Run the scrapper every time the ticker fires
 	for range ticker.C {
-		if err := scrapeFeeds(s.db); err != nil {
+		if err := scrapeFeeds(s); err != nil {
 			return err
 		}
 	}
@@ -247,6 +248,7 @@ func handlerUsers(s *state, cmd command) error {
 	return nil
 }
 
+// handlerUnFollow removes the feed from the user's following list.
 func handlerUnFollow(s *state, cmd command, user database.User) error {
 	if len(cmd.args) == 0 {
 		return errors.New("missing feed url")
@@ -263,5 +265,37 @@ func handlerUnFollow(s *state, cmd command, user database.User) error {
 	}); err != nil {
 		return errors.New("failed to remove following feed")
 	}
+	return nil
+}
+
+// handlerBrowse lists the last N posts of the user.
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	postLimit := 2
+	if len(cmd.args) == 1 {
+		var err error
+		postLimit, err = strconv.Atoi(cmd.args[0])
+		if err != nil {
+			return err
+		}
+	} else if len(cmd.args) > 1 {
+		return errors.New("too many arguments")
+	}
+
+	posts, err := s.db.GetPostsForUser(context.Background(), database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  int32(postLimit),
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, post := range posts {
+		fmt.Println("--------------------------------")
+		fmt.Printf("Title: %s\n", post.Title)
+		fmt.Printf("URL: %s\n", post.Url)
+		fmt.Printf("Description: %v\n", post.Description)
+		fmt.Printf("Published Date: %s\n", post.PublishedAt)
+	}
+
 	return nil
 }
