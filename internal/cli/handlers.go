@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Nightails/gator/internal/database"
-	"github.com/Nightails/gator/internal/rss"
 	"github.com/google/uuid"
 )
 
@@ -57,34 +56,34 @@ func handlerAddFeed(s *state, cmd command, user database.User) error {
 
 // handlerAgg fetches the RSS feed from the given URL and prints it to the console.
 func handlerAgg(s *state, cmd command) error {
-	if len(cmd.args) > 0 {
-		return errors.New("too many arguments")
+	if len(cmd.args) == 0 {
+		return errors.New("missing duration between fetches")
+	} else if len(cmd.args) > 1 {
+		return errors.New("too many arguments, expected duration between fetches")
 	}
 
-	// temporary url, to be replaced with config
-	url := "https://www.wagslane.dev/index.xml"
-	ctx := context.Background()
-	rssf, err := rss.FetchFeed(ctx, url)
+	timeBetweenReqs, err := time.ParseDuration(cmd.args[0])
 	if err != nil {
 		return err
 	}
-	rssf.UnescapeString()
-	printRSSFeed(rssf)
+	fmt.Printf("Collectingfeeds every %s\n", timeBetweenReqs)
+
+	ticker := time.NewTicker(timeBetweenReqs)
+	defer ticker.Stop()
+
+	// Run the scrapper immediately on start
+	if err := scrapeFeeds(s.db); err != nil {
+		return err
+	}
+
+	// Run the scrapper every time the ticker fires
+	for range ticker.C {
+		if err := scrapeFeeds(s.db); err != nil {
+			return err
+		}
+	}
 
 	return nil
-}
-
-// printRSSFeed prints the given RSS feed to the console.
-func printRSSFeed(rssf *rss.RSSFeed) {
-	fmt.Printf("Title: %s\n", rssf.Channel.Title)
-	fmt.Printf("Description: %s\n", rssf.Channel.Description)
-	fmt.Println("Items:")
-	for _, item := range rssf.Channel.Item {
-		fmt.Printf("- Title: %s\n", item.Title)
-		fmt.Printf("- Link: %s\n", item.Link)
-		fmt.Printf("- Description: %s\n", item.Description)
-		fmt.Println()
-	}
 }
 
 // handlerFeeds lists all the feeds in the database.

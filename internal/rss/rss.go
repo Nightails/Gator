@@ -22,9 +22,9 @@ func (f *Feed) UnescapeString() {
 	f.Channel.Title = html.UnescapeString(f.Channel.Title)
 	f.Channel.Description = html.UnescapeString(f.Channel.Description)
 
-	for _, item := range f.Channel.Item {
-		item.Title = html.UnescapeString(item.Title)
-		item.Description = html.UnescapeString(item.Description)
+	for i := range f.Channel.Item {
+		f.Channel.Item[i].Title = html.UnescapeString(f.Channel.Item[i].Title)
+		f.Channel.Item[i].Description = html.UnescapeString(f.Channel.Item[i].Description)
 	}
 }
 
